@@ -4,11 +4,11 @@ import '../styles/LandingPage.css'
 
 function LandingPage() {
     return (
-        <section>
+        <section className='home'>
             <div className='brand'>
                 <img src={logoEsa} alt="Logo ESA" />
                 <p className='subtitle'>EUROPEAN SPACE AGENCY</p>
-                <p className='title'>DEEP HORIZON <span>IX</span></p>
+                <p className='title'>DEEP HORIZON <span className='blue-text'>IX</span></p>
             </div>
             <div className='button-group'>
                 <NavLink to="/botanical-garden">
