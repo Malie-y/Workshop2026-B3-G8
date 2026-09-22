@@ -45,4 +45,9 @@ button {
     font-family: "ibm plex mono";
     color: var(--bg-cabine);
     border: none;
+    cursor: pointer;
+
+    &:hover {
+        transform: scale(1.1);
+    }
 }
