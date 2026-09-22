@@ -11,7 +11,9 @@ function LandingPage() {
                 <p className='title'>DEEP HORIZON <span>IX</span></p>
             </div>
             <div className='button-group'>
-                <button>Serre Botanique</button>
+                <NavLink to="/botanical-garden">
+                    <button>Serre Botanique</button>
+                </NavLink>
                 <NavLink to="/crew-and-survival-system">
                     <button>Système Équipage & Survie</button>
                 </NavLink>
