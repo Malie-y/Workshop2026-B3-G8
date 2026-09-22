@@ -1,7 +1,9 @@
+import Navbar from "../components/Navbar";
+
 function BotanicalGarden() {
     return (
         <>
-            <h2>coucou</h2>
+            <Navbar />
         </>
     )
 }
