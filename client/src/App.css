@@ -1,0 +1,7 @@
+@import './styles/variables.css';
+
+body {
+  background-color: var(--bg-cabine);
+  width: 100vw;
+  color : var(--text-primary);
+}

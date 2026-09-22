@@ -1,0 +1,26 @@
+@font-face {
+  font-family: "manrope";
+  src: url(../assets/fonts/Manrope/Manrope-VariableFont_wght.ttf) format("truetype");
+  font-weight: 100 900;
+}
+
+@font-face {
+    font-family: "ibm plex mono";
+    src: url(../assets/fonts/IBM_Plex_Mono/IBMPlexMono-Regular.ttf) format("truetype");
+}
+
+:root {
+  --bg-cabine: #0D1219;
+  --bg-panel: #151D27;
+  --border-tech: #2A3848;
+
+  --text-primary: #E5EDF6;
+  --text-secondary: #8B9DAF;
+
+  --color-primary: #3B82F6;
+  --color-accent: #22D3EE;
+
+  --status-nominal: #34D399;
+  --status-warning: #F59E0B;
+  --status-critical: #EF4444;
+}
