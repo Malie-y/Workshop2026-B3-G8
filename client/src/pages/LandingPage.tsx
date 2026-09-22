@@ -12,10 +12,10 @@ function LandingPage() {
             </div>
             <div className='button-group'>
                 <NavLink to="/botanical-garden">
-                    <button>Serre Botanique</button>
+                    <button className='button-home'>Serre Botanique</button>
                 </NavLink>
                 <NavLink to="/crew-and-survival-system">
-                    <button>Système Équipage & Survie</button>
+                    <button className='button-home'>Système Équipage & Survie</button>
                 </NavLink>
             </div>
         </section>
