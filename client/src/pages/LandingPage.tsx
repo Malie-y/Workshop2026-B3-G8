@@ -1,3 +1,4 @@
+import { NavLink } from 'react-router-dom';
 import logoEsa from '../assets/img/logo-esa.svg'
 import '../styles/LandingPage.css'
 
@@ -11,7 +12,9 @@ function LandingPage() {
             </div>
             <div className='button-group'>
                 <button>Serre Botanique</button>
-                <button>Système Équipage & Survie</button>
+                <NavLink to="/crew-and-survival-system">
+                    <button>Système Équipage & Survie</button>
+                </NavLink>
             </div>
         </section>
     )
