@@ -3,6 +3,7 @@ import Navbar from "../components/Navbar";
 import ResourceCard from "../components/ResourceCard";
 import '../styles/CrewAndSurvivalSystem.css'
 import type { ResourceData } from '../types/resource';
+import { lire } from "../types/api";
 
 function CrewAndSurvivalSystem() {
     const [resources, setResources] = useState<ResourceData[]>([]);
@@ -11,21 +12,15 @@ function CrewAndSurvivalSystem() {
 
     useEffect(() => {
         const fetchResources = async () => {
-        try {
-            // Remplacez par le chemin de votre API
-            const response = await fetch('http://localhost:8080/api/ressources_vitales');
-
-            if (!response.ok) {
-            throw new Error(`Erreur HTTP: ${response.status}`);
+            try {
+                // lire() s'occupe de rajouter l'URL de base et de vérifier res.ok
+                const data = await lire<ResourceData[]>('ressources_vitales');
+                setResources(data);
+            } catch (err: any) {
+                setError(err.message || 'Impossible de charger les ressources.');
+            } finally {
+                setLoading(false);
             }
-
-            const data: ResourceData[] = await response.json();
-            setResources(data);
-        } catch (err: any) {
-            setError(err.message || 'Impossible de charger les ressources.');
-        } finally {
-            setLoading(false);
-        }
         };
 
         fetchResources();

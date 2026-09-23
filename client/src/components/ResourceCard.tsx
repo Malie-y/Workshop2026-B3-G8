@@ -37,7 +37,7 @@ function ResourceCard({ resource }: ResourceCardProps) {
                     <img className='icon-water' src={waterIcon} alt="water icon" />
                     
                     <div>
-                        <h2 className="resource-card-title">RÉSERVE ${resource.categorie}</h2>
+                        <h2 className="resource-card-title">RÉSERVE {resource.categorie}</h2>
                     </div>
                 </div>
                 <div className="status-badge">
@@ -93,7 +93,7 @@ function ResourceCard({ resource }: ResourceCardProps) {
                     <span className="stat-label">RESTANT</span>
                     <div className="stat-value-group">
                         <span className="stat-value">{resource.quantite_restante.toLocaleString('fr-FR')}</span>
-                        <span className="stat-unit">L</span>
+                        <span className="stat-unit">{resource.unite}</span>
                     </div>
                 </div>
 
