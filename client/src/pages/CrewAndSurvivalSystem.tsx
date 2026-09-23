@@ -1,14 +1,50 @@
+import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import ResourceCard from "../components/ResourceCard";
 import '../styles/CrewAndSurvivalSystem.css'
+import type { ResourceData } from '../types/resource';
 
 function CrewAndSurvivalSystem() {
+    const [resources, setResources] = useState<ResourceData[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchResources = async () => {
+        try {
+            // Remplacez par le chemin de votre API
+            const response = await fetch('http://localhost:8080/api/ressources_vitales');
+
+            if (!response.ok) {
+            throw new Error(`Erreur HTTP: ${response.status}`);
+            }
+
+            const data: ResourceData[] = await response.json();
+            setResources(data);
+        } catch (err: any) {
+            setError(err.message || 'Impossible de charger les ressources.');
+        } finally {
+            setLoading(false);
+        }
+        };
+
+        fetchResources();
+    }, []);
+
+    if (loading) return <div className="loading">Chargement des données de survie...</div>;
+    if (error) return <div className="error-message">Erreur : {error}</div>;
+
     return (
         <>
             <Navbar />
             <section className="resources">
                 <p>Ressources critiques</p>
-                <ResourceCard />
+                <article>
+                    {resources.map((resource) => (
+                        <ResourceCard key={resource.id} resource={resource} />
+                    ))
+                    }
+                </article>
             </section>
         </>
     )
