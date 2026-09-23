@@ -1,0 +1,215 @@
+.resource-card {
+  position: relative;
+  background-color: var(--bg-cabine);
+  border: 1px solid var(--border-tech);
+  border-radius: 4px;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 900px;
+}
+
+/* Ligne verte décorative sur le côté gauche */
+.card-accent-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 3px;
+}
+
+/* --- Header --- */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.header-title-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.icon-water {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border: 1px solid var(--border-tech);
+  background-color: var(--bg-panel);
+  padding: 0.5rem;
+}
+
+.resource-card-subtitle {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-family: 'IBM Plex Mono';
+  margin-bottom: 4px;
+}
+
+.resource-card-title {
+    font-family: 'manrope';
+    font-size: 1.5rem;
+    font-weight: 500;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-text {
+    font-family: 'IBM Plex Mono';
+    font-size: 0.75rem;
+    color: var(--color-primary);
+}
+
+.status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+/* --- Progress Bar --- */
+.progress-section {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.progress-bar-container {
+    position: relative;
+    flex: 1;
+    height: 16px;
+    background-color: #111c2a;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+/* Marques verticales statiques */
+.threshold-marker {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: var(--bg-cabine);
+    z-index: 2; 
+    pointer-events: none;
+}
+
+.segment-divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: var(--bg-panel)
+}
+
+.percentage-display {
+  font-family: 'IBM Plex Mono';
+  font-size: 2.5rem;
+  font-weight: 600;
+  line-height: 1;
+  min-width: 90px;
+  text-align: right;
+}
+
+.percent-symbol {
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+/* --- Stats Grid --- */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-bottom: 1px solid var(--border-tech);
+  padding: 1rem 0;
+  margin-bottom: 1.5rem;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0 1rem;
+}
+
+.stat-item:not(:last-child) {
+  border-right: 1px solid var(--border-tech);
+}
+
+.stat-item:first-child {
+  padding-left: 0;
+}
+
+.stat-label {
+  font-family: 'IBM Plex Mono';
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.stat-value-group {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-family: 'IBM Plex Mono';
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.stat-unit {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+/* --- Legend --- */
+.card-legend {
+  display: flex;
+  gap: 24px;
+  font-family: 'IBM Plex Mono';
+  font-size: 0.5rem;
+  color: var(--text-secondary);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap:0.5rem;
+}
+
+.legend-dot {
+  width: 0.3rem;
+  height: 0.3rem;
+  border-radius: 50%;
+}
+
+.status-normal {
+    background-color: var(--status-normal);
+}
+
+.status-warning {
+    background-color: var(--status-warning);
+}
+  
+.status-critical {
+    background-color: var(--status-critical);
+}

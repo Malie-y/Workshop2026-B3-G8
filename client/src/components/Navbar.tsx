@@ -71,11 +71,17 @@ function Navbar() {
             </div>
 
             <nav className='button-group-nav'>
-                <NavLink to="/botanical-garden">
-                    <button className='button-nav'>Serre Botanique</button>
+                <NavLink 
+                    to="/botanical-garden" 
+                    className={({ isActive }) => isActive ? "button-nav button-active" : "button-nav"}
+                >
+                    Serre Botanique
                 </NavLink>
-                <NavLink to="/crew-and-survival-system">
-                    <button className='button-nav'>Système Équipage & Survie</button>
+                <NavLink 
+                    to="/crew-and-survival-system"
+                    className={({ isActive }) => isActive ? "button-nav button-active" : "button-nav"}
+                >
+                    Système Équipage & Survie
                 </NavLink>
             </nav>
 
