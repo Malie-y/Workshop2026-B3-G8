@@ -21,3 +21,6 @@ docker run --rm \
   -v NOM_DE_TON_VOLUME:/volume \
   -v $(pwd):/backup \
   alpine sh -c "rm -rf /volume/* && tar xzf /backup/NOM_DU_FICHIER.tar.gz -C /volume"
+
+# laravel api instal
+  powershell -ExecutionPolicy Bypass -File .\setup.ps1

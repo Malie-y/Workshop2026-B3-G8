@@ -1,0 +1,15 @@
+.resources {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+    margin-top: 3rem;
+
+    &>p {
+        width: 100%;
+        max-width: 900px;
+        font-family: 'manrope';
+        font-weight: 600;
+        font-size: 1.5rem;
+    }
+}

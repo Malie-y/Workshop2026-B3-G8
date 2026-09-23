@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Console API — workshop_db</title>
+<style>
+  :root{
+    --ink:#16202b;
+    --ink-soft:#5a6b7c;
+    --surface:#e5eaee;
+    --panel:#fbfcfd;
+    --rule:#c2ccd5;
+    --signal:#1a4fd6;
+    --ok:#0f7a54;
+    --warn:#a8600c;
+    --err:#bf322c;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--surface);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:15px;
+    line-height:1.5;
+    padding:24px 20px 48px;
+  }
+  .wrap{max-width:1120px;margin:0 auto}
+
+  /* ---- barre d'adresse : l'élément principal ---- */
+  .bar{
+    background:var(--panel);
+    border:1px solid var(--rule);
+    border-radius:4px;
+    padding:14px 16px;
+    display:flex;
+    gap:12px;
+    align-items:baseline;
+    flex-wrap:wrap;
+  }
+  .bar .verb{
+    font-family:var(--mono);
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:.04em;
+    color:var(--signal);
+    border:1px solid var(--signal);
+    border-radius:3px;
+    padding:2px 7px;
+    flex:none;
+  }
+  #urlPreview{
+    font-family:var(--mono);
+    font-size:17px;
+    word-break:break-all;
+    flex:1 1 320px;
+    min-width:0;
+  }
+  #urlPreview .dim{color:var(--ink-soft)}
+  h1{
+    font-size:18px;
+    font-weight:600;
+    margin:0 0 4px;
+    letter-spacing:-.01em;
+  }
+  .sub{color:var(--ink-soft);font-size:13.5px;margin:0 0 18px}
+
+  main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;margin-top:20px}
+  @media (max-width:860px){main{grid-template-columns:minmax(0,1fr)}}
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--rule);
+    border-radius:4px;
+    padding:18px;
+  }
+  .panel > h2{
+    font-size:13px;
+    font-weight:600;
+    margin:0 0 14px;
+    color:var(--ink-soft);
+    letter-spacing:.01em;
+  }
+
+  label{display:block;font-size:12.5px;color:var(--ink-soft);margin:0 0 5px}
+  input,select,textarea,button{font-family:inherit;font-size:14px;color:inherit}
+  input,select,textarea{
+    width:100%;
+    background:#fff;
+    border:1px solid var(--rule);
+    border-radius:3px;
+    padding:8px 9px;
+  }
+  input:focus,select:focus,textarea:focus,button:focus-visible{
+    outline:2px solid var(--signal);
+    outline-offset:1px;
+  }
+  textarea{font-family:var(--mono);font-size:13.5px;line-height:1.55;resize:vertical;min-height:190px;tab-size:2}
+  .row{display:flex;gap:10px;margin-bottom:14px}
+  .row > div{flex:1;min-width:0}
+  .row .narrow{flex:0 0 96px}
+
+  .verbs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+  .verbs button{
+    background:#fff;
+    border:1px solid var(--rule);
+    border-radius:3px;
+    padding:6px 11px;
+    font-family:var(--mono);
+    font-size:12.5px;
+    cursor:pointer;
+  }
+  .verbs button[aria-pressed="true"]{
+    background:var(--signal);
+    border-color:var(--signal);
+    color:#fff;
+  }
+
+  .jsonhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+  #jsonState{font-size:12px;font-family:var(--mono)}
+  #jsonState.bad{color:var(--err)}
+  #jsonState.good{color:var(--ok)}
+  .hint{font-size:12.5px;color:var(--ink-soft);margin:8px 0 0}
+
+  .send{
+    margin-top:16px;
+    width:100%;
+    background:var(--signal);
+    color:#fff;
+    border:1px solid var(--signal);
+    border-radius:3px;
+    padding:11px;
+    font-size:15px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .send:disabled{opacity:.5;cursor:not-allowed}
+
+  .presets{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+  .presets button{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:3px;
+    padding:5px 9px;
+    font-size:12.5px;
+    cursor:pointer;
+    color:var(--ink-soft);
+  }
+  .presets button:hover{border-color:var(--ink);color:var(--ink)}
+
+  .status{display:flex;align-items:baseline;gap:14px;margin-bottom:12px;flex-wrap:wrap}
+  .code{font-family:var(--mono);font-size:22px;font-weight:700}
+  .code.s2{color:var(--ok)} .code.s4{color:var(--warn)} .code.s5,.code.sx{color:var(--err)}
+  .meta{font-size:12.5px;color:var(--ink-soft);font-family:var(--mono)}
+  pre{
+    margin:0;
+    background:#f2f5f7;
+    border:1px solid var(--rule);
+    border-radius:3px;
+    padding:12px;
+    overflow:auto;
+    max-height:520px;
+    font-family:var(--mono);
+    font-size:13px;
+    line-height:1.55;
+    white-space:pre-wrap;
+    word-break:break-word;
+  }
+  .k{color:#7a3fa0} .s{color:#0f7a54} .n{color:#b8480c} .b{color:var(--signal)}
+  .empty{color:var(--ink-soft);font-size:13.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Console API — workshop_db</h1>
+  <p class="sub">Compose une requête, envoie-la, lis la réponse brute.</p>
+
+  <div class="bar">
+    <span class="verb" id="verbBadge">GET</span>
+    <span id="urlPreview"></span>
+  </div>
+
+  <main>
+    <section class="panel">
+      <h2>Requête</h2>
+
+      <div class="verbs" id="verbs">
+        <button type="button" data-verb="GET" aria-pressed="true">GET</button>
+        <button type="button" data-verb="POST" aria-pressed="false">POST</button>
+        <button type="button" data-verb="PUT" aria-pressed="false">PUT</button>
+        <button type="button" data-verb="PATCH" aria-pressed="false">PATCH</button>
+        <button type="button" data-verb="DELETE" aria-pressed="false">DELETE</button>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="base">Adresse de base</label>
+          <input id="base" value="http://localhost:8000/api" spellcheck="false">
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="table">Table</label>
+          <input id="table" list="tables" value="plantes" spellcheck="false">
+          <datalist id="tables">
+            <option value="utilisateurs"><option value="ressources_vitales">
+            <option value="plantes"><option value="matos_iot">
+            <option value="journee"><option value="regles_automatiques">
+            <option value="routines_quotidiennes"><option value="logs_capteurs">
+          </datalist>
+        </div>
+        <div class="narrow">
+          <label for="id">id</label>
+          <input id="id" placeholder="—" spellcheck="false">
+        </div>
+      </div>
+
+      <div class="jsonhead">
+        <label for="json">Corps JSON</label>
+        <span id="jsonState"></span>
+      </div>
+      <textarea id="json" spellcheck="false">{}</textarea>
+      <p class="hint" id="jsonHint"></p>
+
+      <button class="send" id="send">Envoyer</button>
+
+      <p class="hint" style="margin-top:18px">Exemples prêts à envoyer</p>
+      <div class="presets" id="presets"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Réponse</h2>
+      <div id="out"><p class="empty">Aucune requête envoyée pour l'instant.</p></div>
+    </section>
+  </main>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const el = {base:$('base'), table:$('table'), id:$('id'), json:$('json'),
+            url:$('urlPreview'), badge:$('verbBadge'), state:$('jsonState'),
+            hint:$('jsonHint'), out:$('out'), send:$('send')};
+let verb = 'GET';
+
+/* ---------- exemples ---------- */
+const presets = [
+  ['Toutes les plantes',      'GET',    'plantes', '', '{}'],
+  ['Une plante',              'GET',    'plantes', '1', '{}'],
+  ['Capteurs seulement',      'GET',    'matos_iot', '', '{\n  "type": "capteur"\n}'],
+  ['Plantes à surveiller',    'GET',    'plantes', '', '{\n  "where": {\n    "sante_globale": ["ATTENTION", "CRITIQUE"]\n  }\n}'],
+  ['Relevés paginés',         'GET',    'logs_capteurs', '', '{\n  "matos_id": 1,\n  "page": 1,\n  "nombre": 20\n}'],
+  ['Planning à heure fixe',   'GET',    'routines_quotidiennes', '', '{\n  "journee_id": 4,\n  "actif": 1\n}'],
+  ['Nouveau relevé',          'POST',   'logs_capteurs', '', '{\n  "matos_id": 2,\n  "valeur_mesuree": "38%"\n}'],
+  ['Arroser les tomates',     'PUT',    'plantes', '1', '{\n  "humidite_sol": 62.5,\n  "sante_globale": "EXCELLENTE"\n}'],
+  ['Allumer la LED',          'PUT',    'matos_iot', '3', '{\n  "valeur_actuelle": "ON"\n}'],
+  ['Purger les relevés',      'DELETE', 'logs_capteurs', '', '{\n  "where": {\n    "matos_id": 1\n  }\n}'],
+  ['Table inexistante (404)', 'GET',    'poule', '', '{}'],
+  ['Colonne inconnue (400)',  'GET',    'plantes', '', '{\n  "couleur": "ROUGE"\n}'],
+];
+el.presets = $('presets');
+presets.forEach(([nom, v, t, i, j]) => {
+  const b = document.createElement('button');
+  b.type = 'button'; b.textContent = nom;
+  b.onclick = () => { setVerb(v); el.table.value = t; el.id.value = i; el.json.value = j; refresh(); };
+  el.presets.appendChild(b);
+});
+
+/* ---------- méthode ---------- */
+function setVerb(v){
+  verb = v;
+  for (const b of $('verbs').children) b.setAttribute('aria-pressed', String(b.dataset.verb === v));
+  el.badge.textContent = v;
+}
+$('verbs').onclick = e => { const b = e.target.closest('button'); if (b) { setVerb(b.dataset.verb); refresh(); } };
+
+/* ---------- JSON -> query string (GET n'a pas de corps) ---------- */
+function toQuery(obj, prefix, out){
+  out = out || [];
+  for (const [k, v] of Object.entries(obj)){
+    const cle = prefix ? prefix + '[' + k + ']' : k;
+    if (Array.isArray(v))      v.forEach(x => out.push(encodeURIComponent(cle + '[]') + '=' + encodeURIComponent(x)));
+    else if (v && typeof v === 'object') toQuery(v, cle, out);
+    else if (v !== null)       out.push(encodeURIComponent(cle) + '=' + encodeURIComponent(v));
+  }
+  return out;
+}
+
+function parseJson(){
+  const txt = el.json.value.trim();
+  if (!txt) return {};
+  return JSON.parse(txt);
+}
+
+function buildUrl(corps){
+  let u = el.base.value.replace(/\/+$/,'') + '/' + el.table.value.trim();
+  if (el.id.value.trim()) u += '/' + encodeURIComponent(el.id.value.trim());
+  if (verb === 'GET' && corps && Object.keys(corps).length){
+    const q = toQuery(corps).join('&');
+    if (q) u += '?' + q;
+  }
+  return u;
+}
+
+/* ---------- aperçu ---------- */
+function refresh(){
+  let corps = null, ok = true;
+  try { corps = parseJson(); el.state.textContent = 'JSON valide'; el.state.className = 'good'; }
+  catch (e) { ok = false; el.state.textContent = 'JSON invalide'; el.state.className = 'bad'; }
+
+  el.send.disabled = !ok;
+  el.hint.textContent = !ok ? 'Corrige le JSON avant d\'envoyer.'
+    : verb === 'GET' ? 'En GET, le JSON est transformé en paramètres d\'URL.'
+    : verb === 'DELETE' ? 'Avec un id, le corps est ignoré. Sans id, il faut un filtre.'
+    : 'Envoyé tel quel dans le corps de la requête.';
+
+  const u = buildUrl(ok ? corps : {});
+  const i = u.indexOf('?');
+  el.url.innerHTML = i < 0 ? esc(u)
+    : esc(u.slice(0, i)) + '<span class="dim">' + esc(u.slice(i)) + '</span>';
+}
+['input','change'].forEach(ev => {
+  [el.base, el.table, el.id, el.json].forEach(n => n.addEventListener(ev, refresh));
+});
+
+/* ---------- envoi ---------- */
+el.send.onclick = envoyer;
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); if (!el.send.disabled) envoyer(); }
+});
+
+async function envoyer(){
+  let corps;
+  try { corps = parseJson(); } catch { return; }
+
+  const url = buildUrl(corps);
+  const opts = { method: verb, headers: { 'Accept': 'application/json' } };
+  if (verb !== 'GET' && Object.keys(corps).length){
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(corps);
+  }
+
+  el.send.disabled = true;
+  el.out.innerHTML = '<p class="empty">Envoi en cours…</p>';
+  const t0 = performance.now();
+
+  try {
+    const r = await fetch(url, opts);
+    const ms = Math.round(performance.now() - t0);
+    const txt = await r.text();
+    afficher(r.status, r.statusText, ms, txt);
+  } catch (err) {
+    const ms = Math.round(performance.now() - t0);
+    el.out.innerHTML =
+      '<div class="status"><span class="code sx">—</span>'
+      + '<span class="meta">échec réseau · ' + ms + ' ms</span></div>'
+      + '<pre>' + esc(String(err)) + '</pre>'
+      + '<p class="hint">Serveur injoignable ou requête bloquée par le navigateur. '
+      + 'Vérifie que Laravel tourne, et ouvre cette page depuis la même adresse '
+      + '(fichier placé dans <code>public/</code>) pour éviter le blocage CORS.</p>';
+  } finally {
+    el.send.disabled = false;
+  }
+}
+
+function afficher(code, texte, ms, brut){
+  const cls = 's' + String(code)[0];
+  let corps;
+  if (!brut.trim()) {
+    corps = '<p class="empty">Réponse vide.</p>';
+  } else {
+    try { corps = '<pre>' + colorer(JSON.stringify(JSON.parse(brut), null, 2)) + '</pre>'; }
+    catch { corps = '<pre>' + esc(brut) + '</pre>'; }
+  }
+  const poids = new Blob([brut]).size;
+  el.out.innerHTML =
+    '<div class="status">'
+    + '<span class="code ' + cls + '">' + code + '</span>'
+    + '<span class="meta">' + esc(texte || '') + ' · ' + ms + ' ms · ' + poids + ' o</span>'
+    + '</div>' + corps;
+}
+
+/* ---------- affichage ---------- */
+function esc(s){
+  return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+}
+function colorer(json){
+  return esc(json).replace(
+    /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g,
+    m => {
+      let c = 'n';
+      if (/^"/.test(m)) c = /:$/.test(m) ? 'k' : 's';
+      else if (/true|false|null/.test(m)) c = 'b';
+      return '<span class="' + c + '">' + m + '</span>';
+    });
+}
+
+/* ---------- mémorise l'adresse de base ---------- */
+try {
+  const sauve = localStorage.getItem('api-base');
+  if (sauve) el.base.value = sauve;
+  el.base.addEventListener('change', () => {
+    try { localStorage.setItem('api-base', el.base.value); } catch {}
+  });
+} catch {}
+
+refresh();
+</script>
+</body>
+</html>
