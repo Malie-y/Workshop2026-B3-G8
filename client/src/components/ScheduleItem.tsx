@@ -1,22 +1,19 @@
 import { useState } from 'react';
-// import './ScheduleItem.css';
+import '../styles/ScheduleItem.css';
+import type { PlanningData } from '../types/planning';
 
-export default function ScheduleItem() {
+interface PlanningCardProps {
+  item: PlanningData;
+}
+
+export default function ScheduleItem({ item }: PlanningCardProps) {
   // État local pour cocher/décocher la tâche (simulant le champ actif/fait)
-  const [isDone, setIsDone] = useState(true);
-
-  // Exemple de données basées sur votre entrée BDD:
-  // (4, 3, NULL, 1, '10:30:00', 'Boire - LED bleue (eau)', TRUE)
-  const itemData = {
-    heure: '10:30',
-    titre: 'Hydratation',
-    description: 'Boire - LED bleue (eau)',
-  };
+  const [isDone, setIsDone] = useState(false);
 
   return (
     <div className={`schedule-item ${isDone ? 'is-done' : ''}`}>
       {/* 1. Heure */}
-      <span className="schedule-time">{itemData.heure}</span>
+      <span className="schedule-time">{item.heure_precise}</span>
 
       {/* 2. Bloc Icône */}
       <div className="schedule-icon-wrapper">
@@ -25,8 +22,7 @@ export default function ScheduleItem() {
 
       {/* 3. Titre & Description */}
       <div className="schedule-details">
-        <h4 className="schedule-title">{itemData.titre}</h4>
-        <span className="schedule-description">{itemData.description}</span>
+        <span className="schedule-description">{item.description ? item.description.split(' ')[0] : ''}</span>
       </div>
 
       {/* 4. Checkbox & Statut */}
