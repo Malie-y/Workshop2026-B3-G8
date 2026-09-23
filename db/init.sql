@@ -2,7 +2,7 @@
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
--- Suppression de toutes les anciennes tables (et vues homonymes eventuelles)
+-- Suppression de toutes les anciennes tables 
 DROP VIEW IF EXISTS journee;
 DROP TABLE IF EXISTS logs_capteurs;
 DROP TABLE IF EXISTS routines_quotidiennes;
@@ -16,15 +16,8 @@ DROP TABLE IF EXISTS objets_suivis;
 DROP TABLE IF EXISTS journee;
 DROP TABLE IF EXISTS utilisateurs;
 
- -- Réactivation des clés étrangères
+-- Réactivation des clés étrangères
 SET FOREIGN_KEY_CHECKS = 1;
-
--- Utilisateurs (Membres du projet / Astronautes)
-CREATE TABLE utilisateurs (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    nom VARCHAR(100) NOT NULL,
-    email VARCHAR(150) UNIQUE NOT NULL
-);
 
 -- Ressources Vitales (Gestion Eau, Nourriture)
 CREATE TABLE ressources_vitales (
@@ -91,7 +84,7 @@ CREATE TABLE routines_quotidiennes (
     FOREIGN KEY (ressource_vitale_id) REFERENCES ressources_vitales(id) ON DELETE CASCADE
 );
 
- -- Historique des mesures des capteurs
+-- Historique des mesures des capteurs
 CREATE TABLE logs_capteurs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     matos_id INT NOT NULL,
@@ -100,18 +93,18 @@ CREATE TABLE logs_capteurs (
     FOREIGN KEY (matos_id) REFERENCES matos_iot(id) ON DELETE CASCADE
 );
 
- -- Ressources Vitales (Eau, Rations)
+-- Ressources Vitales (Eau, Rations)
 INSERT INTO ressources_vitales (id, nom, categorie, quantite_restante, quantite_max, unite, couleur_led_associee) VALUES
 (1, 'Eau potable', 'eau', 1435.00, 1800.00, 'L', 'BLEU'),
 (2, 'Nutrition / Rations', 'nourriture', 744.00, 1200.00, 'kcal', 'VERT');
 
- -- Plantes (Tomates, Patates, Salade)
+-- Plantes (Tomates, Patates, Salade)
 INSERT INTO plantes (id, nom, humidite_sol, temperature_ideale, sante_globale, couleur_led_associee) VALUES
 (1, 'Tomates', 45.0, 22.0, 'BONNE', 'ROUGE'),
 (2, 'Patates', 60.0, 18.0, 'EXCELLENTE', 'ROUGE'),
 (3, 'Salade', 80.0, 18.0, 'ATTENTION', 'ROUGE');
 
- -- Materiel IoT
+-- Materiel IoT
 INSERT INTO matos_iot (id, nom, type, valeur_actuelle) VALUES 
 (1, 'Capteur Temperature Serre', 'capteur', '22.5C'),
 (2, 'Capteur Humidite Sol', 'capteur', '45%'),
@@ -133,8 +126,8 @@ INSERT INTO regles_automatiques (id, ressource_vitale_id, plante_id, matos_id, m
 (4, NULL, 3, 1, 'Temperature trop elevee pour la Salade (>26C)', 'CRITIQUE', 26.00);
 
 -- Routines Quotidiennes (planning heures fixes reveil/repas/hydratation/sommeil)
- Toutes rattachees a journee_id = 4 (Heure precise) et matos_id = 3 (LED Lumiere)
-INSERT INTO routines_quotidiennes (journee_id, matos_id, ressource_vitale_id, heure_precise, description, actif) VALUES
+-- Toutes rattachees a journee_id = 4 (Heure precise) et matos_id = 3 (LED Lumiere)
+INSERT INTO routines_quotidiennes (journee_id, matos_id, plante_id, ressource_vitale_id, heure_precise, description, actif) VALUES
 (1, 2, 1, NULL, NULL, '(routine capteur, hors planning horaire)', TRUE),
 (4, 3, NULL, NULL, '07:00:00', 'Reveil - LED rouge (sommeil)', TRUE),
 (4, 3, NULL, 2, '07:30:00', 'Manger - LED verte (nourriture)', TRUE),
@@ -147,7 +140,7 @@ INSERT INTO routines_quotidiennes (journee_id, matos_id, ressource_vitale_id, he
 (4, 3, NULL, 1, '22:00:00', 'Boire - LED bleue (eau)', TRUE),
 (4, 3, NULL, NULL, '23:00:00', 'Dormir - LED rouge (sommeil)', TRUE);
 
- -- Historique des releves (Logs)
+-- Historique des releves (Logs)
 INSERT INTO logs_capteurs (matos_id, valeur_mesuree) VALUES 
 (1, '22.5C'),
 (2, '45%'),
