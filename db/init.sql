@@ -96,9 +96,9 @@ CREATE TABLE logs_capteurs (
 );
 
 -- Ressources Vitales (Eau, Rations)
-INSERT INTO ressources_vitales (id, nom, categorie, quantite_restante, quantite_max, unite, couleur_led_associee) VALUES
+INSERT INTO ressources_vitales (id, nom, categorie, quantite_restante, quantite_max, consommation_quotidienne, unite, couleur_led_associee) VALUES
 (1, 'Eau potable', 'eau', 1435.00, 1800.00, 1.5, 'L', 'BLEU'),
-(2, 'Nutrition / Rations', 'nourriture', 744.00, 1200.00, 4.0, 'kcal', 'VERT');
+(2, 'Nutrition / Rations', 'nourriture', 744.00, 1200.00, 4.0, 'ration', 'VERT');
 
 -- Plantes (Tomates, Patates, Salade)
 INSERT INTO plantes (id, nom, humidite_sol, temperature_ideale, sante_globale, couleur_led_associee) VALUES
