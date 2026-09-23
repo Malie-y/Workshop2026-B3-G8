@@ -100,8 +100,8 @@ function ResourceCard({ resource }: ResourceCardProps) {
                 <div className="stat-item">
                     <span className="stat-label">CONSOMMATION</span>
                     <div className="stat-value-group">
-                        <span className="stat-value">{dailyConsumptionWater}</span>
-                        <span className="stat-unit">L / jour</span>
+                        <span className="stat-value">{resource.consommation_quotidienne}</span>
+                        <span className="stat-unit">{resource.unite} / jour</span>
                     </div>
                 </div>
 

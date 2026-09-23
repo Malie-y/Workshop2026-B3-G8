@@ -26,6 +26,7 @@ CREATE TABLE ressources_vitales (
     categorie ENUM('eau', 'nourriture') NOT NULL,
     quantite_restante DECIMAL(10,2) NOT NULL DEFAULT 100.0,
     quantite_max DECIMAL(10,2) NOT NULL DEFAULT 100.0,
+    consommation_quotidienne DECIMAL(10,2) NOT NULL DEFAULT 0.0,
     unite VARCHAR(20) NOT NULL,
     couleur_led_associee VARCHAR(20) DEFAULT 'BLEU'
 );
@@ -96,8 +97,8 @@ CREATE TABLE logs_capteurs (
 
 -- Ressources Vitales (Eau, Rations)
 INSERT INTO ressources_vitales (id, nom, categorie, quantite_restante, quantite_max, unite, couleur_led_associee) VALUES
-(1, 'Eau potable', 'eau', 1435.00, 1800.00, 'L', 'BLEU'),
-(2, 'Nutrition / Rations', 'nourriture', 744.00, 1200.00, 'kcal', 'VERT');
+(1, 'Eau potable', 'eau', 1435.00, 1800.00, 1.5, 'L', 'BLEU'),
+(2, 'Nutrition / Rations', 'nourriture', 744.00, 1200.00, 4.0, 'kcal', 'VERT');
 
 -- Plantes (Tomates, Patates, Salade)
 INSERT INTO plantes (id, nom, humidite_sol, temperature_ideale, sante_globale, couleur_led_associee) VALUES
