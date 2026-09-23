@@ -34,7 +34,7 @@ function CrewAndSurvivalSystem() {
             <Navbar />
             <section className="resources">
                 <p>Ressources critiques</p>
-                <article>
+                <article className="resources-cards">
                     {resources.map((resource) => (
                         <ResourceCard key={resource.id} resource={resource} />
                     ))

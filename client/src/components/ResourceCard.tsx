@@ -37,7 +37,7 @@ function ResourceCard({ resource }: ResourceCardProps) {
                     <img className='icon-water' src={waterIcon} alt="water icon" />
                     
                     <div>
-                        <h2 className="resource-card-title">RÉSERVE {resource.categorie}</h2>
+                        <h2 className="resource-card-title">RÉSERVE {resource.categorie.toUpperCase()}</h2>
                     </div>
                 </div>
                 <div className="status-badge">
