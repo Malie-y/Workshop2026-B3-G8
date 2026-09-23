@@ -1,20 +1,23 @@
 import '../styles/ResourceCard.css'
 import waterIcon from '../assets/img/water-icon.png'
+import type { ResourceData } from '../types/resource';
 
-function ResourceCard() {
+interface ResourceCardProps {
+  resource: ResourceData;
+}
+
+function ResourceCard({ resource }: ResourceCardProps) {
     // Données en dur
-    const remainingQuantity = 1435;
-    const dailyConsumption = 12;
-    const maxQuantity = 1800;
+    const dailyConsumptionWater = 2;
 
     // Calcul du pourcentage (arrondi à l'entier le plus proche)
-    const percentage = maxQuantity > 0 
-        ? Math.round((remainingQuantity / maxQuantity) * 100) 
+    const percentage = resource.quantite_max > 0 
+        ? Math.round((resource.quantite_restante / resource.quantite_max) * 100) 
         : 0;
     
     // Calcul de l'autonomie restante dynamique (arrondi à l'entier le plus proche)
-    const estimatedAutonomy = dailyConsumption > 0 
-        ? Math.round(remainingQuantity / dailyConsumption) 
+    const estimatedAutonomy = dailyConsumptionWater > 0 
+        ? Math.round(resource.quantite_restante / dailyConsumptionWater) 
         : 0;
 
     return (
@@ -34,8 +37,7 @@ function ResourceCard() {
                     <img className='icon-water' src={waterIcon} alt="water icon" />
                     
                     <div>
-                        <p className="resource-card-subtitle">RÉSERVE H₂O</p>
-                        <h2 className="resource-card-title">Eau potable</h2>
+                        <h2 className="resource-card-title">RÉSERVE {resource.categorie.toUpperCase()}</h2>
                     </div>
                 </div>
                 <div className="status-badge">
@@ -90,16 +92,16 @@ function ResourceCard() {
                 <div className="stat-item">
                     <span className="stat-label">RESTANT</span>
                     <div className="stat-value-group">
-                        <span className="stat-value">{remainingQuantity.toLocaleString('fr-FR')}</span>
-                        <span className="stat-unit">L</span>
+                        <span className="stat-value">{resource.quantite_restante.toLocaleString('fr-FR')}</span>
+                        <span className="stat-unit">{resource.unite}</span>
                     </div>
                 </div>
 
                 <div className="stat-item">
                     <span className="stat-label">CONSOMMATION</span>
                     <div className="stat-value-group">
-                        <span className="stat-value">{dailyConsumption}</span>
-                        <span className="stat-unit">L / jour</span>
+                        <span className="stat-value">{resource.consommation_quotidienne}</span>
+                        <span className="stat-unit">{resource.unite} / jour</span>
                     </div>
                 </div>
 
