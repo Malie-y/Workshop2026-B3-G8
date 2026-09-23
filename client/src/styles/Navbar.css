@@ -37,13 +37,25 @@
     gap: 1rem;
 
     & .button-nav {
-        font-size: 0.5rem;
-        width: 9rem;
+        font-family: "ibm plex mono";
+        font-size: 0.6rem;
+        text-decoration: none;
+        text-align: center;
+        width: 11rem;
         padding: 0.6rem;
         background-color: var(--bg-cabine);
         color: var(--text-secondary);
         border: 1px solid var(--border-tech);
         border-radius: 0.5rem;
+
+        &:hover {
+            cursor: pointer;
+        }
+
+        &.button-active {
+            background-color: var(--text-primary);
+            color: var(--bg-cabine);
+        }
     }
 }
 
