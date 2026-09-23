@@ -134,8 +134,8 @@ INSERT INTO regles_automatiques (id, ressource_vitale_id, plante_id, matos_id, m
 
 -- Routines Quotidiennes (planning heures fixes reveil/repas/hydratation/sommeil)
  Toutes rattachees a journee_id = 4 (Heure precise) et matos_id = 3 (LED Lumiere)
-INSERT INTO routines_quotidiennes (journee_id, matos_id, plante_id, ressource_vitale_id, heure_precise, description, actif) VALUES
-(1, 2, 1, NULL, NULL, 'Verifier humidite sol Tomates (routine capteur, hors planning horaire)', TRUE),
+INSERT INTO routines_quotidiennes (journee_id, matos_id, ressource_vitale_id, heure_precise, description, actif) VALUES
+(1, 2, 1, NULL, NULL, '(routine capteur, hors planning horaire)', TRUE),
 (4, 3, NULL, NULL, '07:00:00', 'Reveil - LED rouge (sommeil)', TRUE),
 (4, 3, NULL, 2, '07:30:00', 'Manger - LED verte (nourriture)', TRUE),
 (4, 3, NULL, 1, '10:30:00', 'Boire - LED bleue (eau)', TRUE),
