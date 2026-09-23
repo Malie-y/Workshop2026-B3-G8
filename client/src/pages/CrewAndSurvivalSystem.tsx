@@ -1,5 +1,6 @@
 import Navbar from "../components/Navbar";
 import ResourceCard from "../components/ResourceCard";
+import ScheduleItem from "../components/ScheduleItem";
 import '../styles/CrewAndSurvivalSystem.css'
 
 function CrewAndSurvivalSystem() {
@@ -10,6 +11,8 @@ function CrewAndSurvivalSystem() {
                 <p>Ressources critiques</p>
                 <ResourceCard />
             </section>
+
+            <ScheduleItem />
         </>
     )
 }
