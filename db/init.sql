@@ -77,6 +77,7 @@ CREATE TABLE routines_quotidiennes (
     ressource_vitale_id INT DEFAULT NULL,
     heure_precise TIME DEFAULT NULL,
     description VARCHAR(255) NOT NULL,
+    quantite_consommee DECIMAL(10,2) DEFAULT NULL,
     actif BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (journee_id) REFERENCES journee(id) ON DELETE CASCADE,
     FOREIGN KEY (matos_id) REFERENCES matos_iot(id) ON DELETE CASCADE,
@@ -127,22 +128,23 @@ INSERT INTO regles_automatiques (id, ressource_vitale_id, plante_id, matos_id, m
 
 -- Routines Quotidiennes (planning heures fixes reveil/repas/hydratation/sommeil)
 -- Toutes rattachees a journee_id = 4 (Heure precise) et matos_id = 3 (LED Lumiere)
-INSERT INTO routines_quotidiennes (journee_id, matos_id, plante_id, ressource_vitale_id, heure_precise, description, actif) VALUES
-(1, 2, 1, NULL, NULL, '(routine capteur, hors planning horaire)', TRUE),
-(4, 3, NULL, NULL, '07:00:00', 'Reveil - LED rouge (sommeil)', TRUE),
-(4, 3, NULL, 2, '07:30:00', 'Manger - LED verte (nourriture)', TRUE),
-(4, 3, NULL, 1, '10:30:00', 'Boire - LED bleue (eau)', TRUE),
-(4, 3, NULL, 2, '12:00:00', 'Manger - LED verte (nourriture)', TRUE),
-(4, 3, NULL, 1, '15:00:00', 'Boire - LED bleue (eau)', TRUE),
-(4, 3, NULL, 2, '16:00:00', 'Manger - LED verte (nourriture)', TRUE),
-(4, 3, NULL, 1, '18:30:00', 'Boire - LED bleue (eau)', TRUE),
-(4, 3, NULL, 2, '19:00:00', 'Manger - LED verte (nourriture)', TRUE),
-(4, 3, NULL, 1, '22:00:00', 'Boire - LED bleue (eau)', TRUE),
-(4, 3, NULL, NULL, '23:00:00', 'Dormir - LED rouge (sommeil)', TRUE);
+-- Eau : 1.5L/jour reparti sur 4 prises => 0.375 par evenement "Boire"
+-- Nourriture : 1 unite par repas, peu importe le repas (4 repas/jour)
+INSERT INTO routines_quotidiennes (journee_id, matos_id, plante_id, ressource_vitale_id, heure_precise, description, quantite_consommee, actif) VALUES
+(1, 2, 1, NULL, NULL, '(routine capteur, hors planning horaire)', NULL, TRUE),
+(4, 3, NULL, NULL, '07:00:00', 'Reveil - LED rouge (sommeil)', NULL, TRUE),
+(4, 3, NULL, 2, '07:30:00', 'Manger - LED verte (nourriture)', 1.00, TRUE),
+(4, 3, NULL, 1, '10:30:00', 'Boire - LED bleue (eau)', 0.375, TRUE),
+(4, 3, NULL, 2, '12:00:00', 'Manger - LED verte (nourriture)', 1.00, TRUE),
+(4, 3, NULL, 1, '15:00:00', 'Boire - LED bleue (eau)', 0.375, TRUE),
+(4, 3, NULL, 2, '16:00:00', 'Manger - LED verte (nourriture)', 1.00, TRUE),
+(4, 3, NULL, 1, '18:30:00', 'Boire - LED bleue (eau)', 0.375, TRUE),
+(4, 3, NULL, 2, '19:00:00', 'Manger - LED verte (nourriture)', 1.00, TRUE),
+(4, 3, NULL, 1, '22:00:00', 'Boire - LED bleue (eau)', 0.375, TRUE),
+(4, 3, NULL, NULL, '23:00:00', 'Dormir - LED rouge (sommeil)', NULL, TRUE);
 
 -- Historique des releves (Logs)
 INSERT INTO logs_capteurs (matos_id, valeur_mesuree) VALUES 
 (1, '22.5C'),
 (2, '45%'),
 (1, '27.0C');
--- a
