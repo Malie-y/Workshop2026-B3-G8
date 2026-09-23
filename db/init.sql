@@ -145,3 +145,4 @@ INSERT INTO logs_capteurs (matos_id, valeur_mesuree) VALUES
 (1, '22.5C'),
 (2, '45%'),
 (1, '27.0C');
+
