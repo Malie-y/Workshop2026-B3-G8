@@ -78,7 +78,7 @@ function BotanicalGarden() {
         const plantesData: PlanteApi[] = await plantesRes.json();
         const matosData: MatosApi[] = await matosRes.json();
 
-        // Capteur de température de la serre (global appliqué à toutes les plantes)
+        // Capteur de température de la serre (global, appliqué à toutes les plantes)
         const capteurTemp = matosData.find((m) => m.type === "capteur" && /temp/i.test(m.nom));
         const temperatureActuelle = capteurTemp ? parseValeurCapteur(capteurTemp.valeur_actuelle) : null;
 
