@@ -3,7 +3,7 @@ export interface PlanningData {
     journee_id: number;                  
     matos_id: number;            
     plante_id: number;    
-    resource_vitale_id: number;
+    ressource_vitale_id: number | null;
     heure_precise: string,       
     description: string;
     quantite_consommee: number;

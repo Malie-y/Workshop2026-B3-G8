@@ -5,7 +5,7 @@ import ScheduleItem from "../components/ScheduleItem";
 import '../styles/CrewAndSurvivalSystem.css'
 import type { ResourceData, } from '../types/resource';
 import type { PlanningData } from '../types/planning';
-import { lire } from "../types/api";
+import { read, edit } from "../types/api";
 import { AlertPlanning } from "../components/AlertPlanning";
 
 function CrewAndSurvivalSystem() {
@@ -23,8 +23,8 @@ function CrewAndSurvivalSystem() {
             
             // Exécution en parallèle des deux requêtes
             const [resourcesData, planningData] = await Promise.all([
-            lire<ResourceData[]>('ressources_vitales'),
-            lire<PlanningData[]>('routines_quotidiennes')
+            read<ResourceData[]>('ressources_vitales'),
+            read<PlanningData[]>('routines_quotidiennes')
             ]);
 
             setResources(resourcesData);
@@ -39,10 +39,52 @@ function CrewAndSurvivalSystem() {
         fetchData();
     }, []);
 
-    // Fonction pour cocher et décocher
-    const handleToggleTask = (id: number) => {
+    const handleToggleTask = async (id: number) => {
+        const task = planning.find((item) => item.id === id);
+        if (!task) return;
+
+        const isAlreadyCompleted = completedTaskIds.includes(id);
+
+        // ✏️ Utilisation de 'ressource_vitale_id' (avec 2 's') et conversion en Number()
+        const resourceId = task.ressource_vitale_id;
+        const consumedQty = Number(task.quantite_consommee);
+
+        if (resourceId && !isNaN(consumedQty) && consumedQty > 0) {
+            const targetResource = resources.find((r) => Number(r.id) === Number(resourceId));
+
+            if (targetResource) {
+                const currentStock = Number(targetResource.quantite_restante);
+
+                // Calcul : ajout si décoché, retrait si coché
+                const newQuantity = isAlreadyCompleted
+                    ? currentStock + consumedQty
+                    : currentStock - consumedQty;
+
+                const updatedQuantity = Math.max(0, Number(newQuantity.toFixed(3)));
+
+                // A. Mise à jour instantanée du State React
+                setResources((prevResources) =>
+                    prevResources.map((resource) =>
+                        Number(resource.id) === Number(resourceId)
+                            ? { ...resource, quantite_restante: updatedQuantity }
+                            : resource
+                    )
+                );
+
+                // B. Persistance en BDD
+                try {
+                    await edit<ResourceData>(`ressources_vitales/${resourceId}`, {
+                        quantite_restante: updatedQuantity,
+                    });
+                } catch (err) {
+                    console.error("Erreur BDD lors de la mise à jour de la ressource :", err);
+                }
+            }
+        }
+
+        // Basculement de l'état de la tâche
         setCompletedTaskIds((prev) =>
-            prev.includes(id) ? prev.filter((taskId) => taskId !== id) : [...prev, id]
+            isAlreadyCompleted ? prev.filter((taskId) => taskId !== id) : [...prev, id]
         );
     };
 
