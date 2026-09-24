@@ -1,9 +1,11 @@
 // URL de base de l'API Laravel
 const API_URL: string = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api';
 
-// GET /api/{chemin} -> JSON
-export async function lire<T>(chemin: string): Promise<T> {
-    const res = await fetch(`${API_URL}/${chemin}`, {
+/**
+ * Fonction générique pour envoyer une requête GET pour récupérer des données
+ */
+export async function read<T>(endpoint: string): Promise<T> {
+    const res = await fetch(`${API_URL}/${endpoint}`, {
         headers: { Accept: 'application/json' },
     });
 
@@ -13,4 +15,23 @@ export async function lire<T>(chemin: string): Promise<T> {
     }
 
     return res.json();
+}
+
+/**
+ * Fonction générique pour envoyer une requête PUT/PATCH et modifier une donnée
+ */
+export async function edit<T>(endpoint: string, payload: Partial<T>): Promise<T> {
+  const response = await fetch(`${API_URL}/${endpoint}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Erreur HTTP ${response.status} lors de la modification de ${endpoint}`);
+  }
+
+  return response.json();
 }
