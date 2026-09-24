@@ -54,6 +54,10 @@ services:
     container_name: workshop_api
     volumes:
       - ./laravel:/var/www
+      - vendor:/var/www/vendor        # vendor stocke cote Linux (rapide)
+    environment:
+      PHP_CLI_SERVER_WORKERS: 4       # 4 requetes en parallele
+    command: sh -c "composer install --no-interaction && php artisan serve --host=0.0.0.0 --port=8000"
     ports:
       - "8000:8000"
     depends_on:
@@ -61,3 +65,4 @@ services:
 
 volumes:
   db_data:
+  vendor:
