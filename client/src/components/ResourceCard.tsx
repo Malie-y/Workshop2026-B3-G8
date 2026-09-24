@@ -1,20 +1,19 @@
 import '../styles/ResourceCard.css'
 import waterIcon from '../assets/img/water-icon.png'
 
-function ResourceCard() {
-    // Données en dur
-    const remainingQuantity = 1435;
-    const dailyConsumption = 12;
-    const maxQuantity = 1800;
+interface ResourceCardProps {
+  resource: ResourceData;
+}
 
+function ResourceCard({ resource }: ResourceCardProps) {
     // Calcul du pourcentage (arrondi à l'entier le plus proche)
     const percentage = maxQuantity > 0 
         ? Math.round((remainingQuantity / maxQuantity) * 100) 
         : 0;
     
     // Calcul de l'autonomie restante dynamique (arrondi à l'entier le plus proche)
-    const estimatedAutonomy = dailyConsumption > 0 
-        ? Math.round(remainingQuantity / dailyConsumption) 
+    const estimatedAutonomy = resource.consommation_quotidienne > 0 
+        ? Math.round(resource.quantite_restante / resource.consommation_quotidienne) 
         : 0;
 
     return (

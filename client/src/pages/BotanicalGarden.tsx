@@ -6,8 +6,8 @@ import "../styles/BotanicalGarden.css";
 interface PlanteApi {
   id: number;
   nom: string;
-  humidite_sol: string;       
-  temperature_ideale: string; 
+  humidite_sol: string;       // ex: "45.00" -> déjà un pourcentage
+  temperature_ideale: string; // ex: "22.0" -> valeur cible unique (pas de min/max en base)
   sante_globale: "EXCELLENTE" | "BONNE" | "ATTENTION" | "CRITIQUE" | string;
   couleur_led_associee: string;
 }
@@ -16,21 +16,26 @@ interface MatosApi {
   id: number;
   nom: string;
   type: "capteur" | "actionneur";
-  valeur_actuelle: string; 
+  valeur_actuelle: string; // ex: "22.5C", "45%", "OFF"
 }
 
 interface PlantView {
   id: number;
   nom: string;
-  temperatureActuelle: number | null; 
+  temperatureActuelle: number | null; // vient du capteur global de la serre
   temperatureIdeale: number;
-  humiditeSol: number; 
+  humiditeSol: number; // déjà en %
   santeGlobale: string;
 }
 
+// L'API expose l'URL de base via VITE_API_URL. Le conteneur "api" (Laravel)
+// écoute sur le port 8000 -> mets VITE_API_URL=http://localhost:8000
+// dans le docker-compose.yml (service "client") si ce n'est pas déjà fait.
+const API_URL = "http://localhost:8000";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
-
+// Marge de tolérance autour de temperature_ideale pour la jauge visuelle,
+// puisque la table "plantes" ne stocke qu'une valeur cible unique (pas de min/max).
+// À ajuster si tu ajoutes des colonnes temperature_min/temperature_max en base.
 const TOLERANCE_TEMPERATURE = 3; // °C
 
 const parseValeurCapteur = (valeur: string): number | null => {
@@ -49,7 +54,7 @@ const statusToBadge = (sante: string) => {
   const healthy = sante === "EXCELLENTE" || sante === "BONNE";
   return {
     healthy,
-    label: healthy ? "SANTÉ NOMINALE" : sante === "CRITIQUE" ? "ALERTE CRITIQUE" : "ATTENTION VIGILANCE",
+    label: healthy ? "SANTÉ NORMALE" : sante === "CRITIQUE" ? "ALERTE CRITIQUE" : "ATTENTION VIGILANCE",
   };
 };
 
@@ -136,8 +141,8 @@ function BotanicalGarden() {
                 <div className="sensor-card">
                   <div className="card-header">
                     <span>THERMIQUE CANOPÉE</span>
-                    <span className={tempPercent > 70 ? "nominal" : "critical"}>
-                      {tempPercent > 70 ? "● NOMINAL" : "● HORS TOLÉRANCE"}
+                    <span className={tempPercent > 70 ? "normale" : "critical"}>
+                      {tempPercent > 70 ? "● NORMALE" : "● HORS TOLÉRANCE"}
                     </span>
                   </div>
 
@@ -164,8 +169,8 @@ function BotanicalGarden() {
                 <div className="sensor-card">
                   <div className="card-header">
                     <span>HUMIDITÉ DU SOL</span>
-                    <span className={humPercent > 40 ? "nominal" : "critical"}>
-                      {humPercent > 40 ? "● NOMINAL" : "● HORS TOLÉRANCE"}
+                    <span className={humPercent > 40 ? "normale" : "critical"}>
+                      {humPercent > 40 ? "● NORMALE" : "● HORS TOLÉRANCE"}
                     </span>
                   </div>
 

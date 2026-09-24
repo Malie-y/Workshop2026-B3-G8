@@ -38,7 +38,7 @@ services:
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
 
   phpmyadmin:
-    image: phpmyadmin 
+    image: phpmyadmin
     container_name: workshop_phpmyadmin
     restart: always
     ports:
