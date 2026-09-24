@@ -1,17 +1,12 @@
-FROM node:22-alpine
+FROM node:20-alpine
 
 WORKDIR /app
 
-# Déclaration de la variable d'environnement pour Vite
-ARG VITE_API_URL
-ENV VITE_API_URL=$VITE_API_URL
-
-COPY package.json package-lock.json ./
-RUN npm ci
+COPY package*.json ./
+RUN npm install
 
 COPY . .
 
 EXPOSE 5173
 
-# Permet à Vite d'accepter les connexions provenant du conteneur Docker
 CMD ["npm", "run", "dev", "--", "--host"]
