@@ -1,26 +1,13 @@
 services:
   web:
-    build: ./server
+    build: ./src
     container_name: workshop_web
     ports:
       - "8080:80"
     volumes:
-      - ./server:/var/www/html
+      - ./src:/var/www/html
     depends_on:
       - db
-
-  client:
-    build: ./client
-    container_name: workshop_client
-    ports:
-      - "5173:5173"
-    volumes:
-      - ./client:/app
-      - /app/node_modules
-    environment:
-      - VITE_API_URL=http://localhost:8000/api
-    depends_on:
-      - api
 
   db:
     image: mysql:8.0
@@ -32,13 +19,13 @@ services:
       MYSQL_USER: user
       MYSQL_PASSWORD: password
     ports:
-      - "3307:3306"
+      - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
 
   phpmyadmin:
-    image: phpmyadmin 
+    image: phpmyadmin/phpmyadmin
     container_name: workshop_phpmyadmin
     restart: always
     ports:
@@ -54,13 +41,15 @@ services:
     container_name: workshop_api
     volumes:
       - ./laravel:/var/www
+      - vendor:/var/www/vendor        # vendor stocke cote Linux (rapide)
+    environment:
+      PHP_CLI_SERVER_WORKERS: 4       # 4 requetes en parallele
+    command: sh -c "composer install --no-interaction && php artisan serve --host=0.0.0.0 --port=8000"
     ports:
       - "8000:8000"
-    environment:
-      # Plusieurs requêtes en parallèle (client + ESP32) au lieu d'une seule
-      - PHP_CLI_SERVER_WORKERS=4
     depends_on:
       - db
 
 volumes:
   db_data:
+  vendor:

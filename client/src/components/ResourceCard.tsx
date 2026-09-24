@@ -7,17 +7,14 @@ interface ResourceCardProps {
 }
 
 function ResourceCard({ resource }: ResourceCardProps) {
-    // Données en dur
-    const dailyConsumptionWater = 2;
-
     // Calcul du pourcentage (arrondi à l'entier le plus proche)
     const percentage = resource.quantite_max > 0 
         ? Math.round((resource.quantite_restante / resource.quantite_max) * 100) 
         : 0;
     
     // Calcul de l'autonomie restante dynamique (arrondi à l'entier le plus proche)
-    const estimatedAutonomy = dailyConsumptionWater > 0 
-        ? Math.round(resource.quantite_restante / dailyConsumptionWater) 
+    const estimatedAutonomy = resource.consommation_quotidienne > 0 
+        ? Math.round(resource.quantite_restante / resource.consommation_quotidienne) 
         : 0;
 
     return (
