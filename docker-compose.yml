@@ -18,9 +18,9 @@ services:
       - ./client:/app
       - /app/node_modules
     environment:
-      - VITE_API_URL=http://localhost:8080
+      - VITE_API_URL=http://localhost:8000/api
     depends_on:
-      - web
+      - api
 
   db:
     image: mysql:8.0
@@ -56,6 +56,9 @@ services:
       - ./laravel:/var/www
     ports:
       - "8000:8000"
+    environment:
+      # Plusieurs requêtes en parallèle (client + ESP32) au lieu d'une seule
+      - PHP_CLI_SERVER_WORKERS=4
     depends_on:
       - db
 
