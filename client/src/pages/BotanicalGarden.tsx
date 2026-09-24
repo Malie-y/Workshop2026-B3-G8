@@ -31,7 +31,7 @@ interface PlantView {
 // L'API expose l'URL de base via VITE_API_URL. Le conteneur "api" (Laravel)
 // écoute sur le port 8000 -> mets VITE_API_URL=http://localhost:8000
 // dans le docker-compose.yml (service "client") si ce n'est pas déjà fait.
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_URL = "http://localhost:8000";
 
 // Marge de tolérance autour de temperature_ideale pour la jauge visuelle,
 // puisque la table "plantes" ne stocke qu'une valeur cible unique (pas de min/max).
