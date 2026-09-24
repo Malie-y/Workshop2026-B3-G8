@@ -1,0 +1,98 @@
+.schedule-item {
+  display: flex;
+  align-items: center;
+  padding: 16px 24px;
+  background-color: var(--bg-cabine);
+  border: 1px solid var(--border-tech);
+  gap: 20px;
+  transition: background-color 0.2s ease;
+  width: 100%;
+}
+
+/* 1. Heure */
+.schedule-time {
+  font-family: 'ibm plex mono';
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  min-width: 50px;
+}
+
+/* 2. Conteneur Icône */
+.schedule-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border-tech);
+  background-color: var(--bg-panel);
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.schedule-icon {
+  color: var(--status-normal);
+}
+
+/* 3. Textes */
+.schedule-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.schedule-description {
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  font-family: 'manrope';
+}
+
+/* 4. Checkbox & Badge Statut */
+.schedule-status-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Style de la case à cocher personnalisée */
+.schedule-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--border-tech);
+  border-radius: 4px;
+  background-color: transparent;
+  cursor: pointer;
+  display: grid;
+  place-content: center;
+  transition: all 0.2s ease;
+}
+
+.schedule-checkbox:checked {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.schedule-checkbox:checked::before {
+  content: "✓";
+  color: var(--bg-cabine);
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.schedule-status-label {
+  font-family: 'ibm plex mono';
+  font-size: 0.75rem;
+  color: var(--border-tech);
+  letter-spacing: 0.05em;
+  min-width: 50px;
+}
+
+/* Quand l'élément est marqué comme "FAIT" */
+.schedule-item.is-done .schedule-status-label {
+  color: var(--status-normal);
+}
