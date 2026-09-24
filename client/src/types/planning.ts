@@ -9,3 +9,17 @@ export interface PlanningData {
     quantite_consommee: number;
     actif: boolean
 }
+
+// Pour la liste globale (AlertPlanning)
+export interface AlertPlanningProps {
+  itemPlanning: PlanningData[];
+  completedTaskIds: number[];
+  onValidateTask: (id: number) => void;
+}
+
+// Pour une carte individuelle (ScheduleItem)
+export interface ScheduleItemProps {
+  itemPlanning: PlanningData;
+  isDone: boolean;
+  onToggle: () => void;
+}

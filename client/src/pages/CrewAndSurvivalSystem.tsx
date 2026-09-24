@@ -6,15 +6,16 @@ import '../styles/CrewAndSurvivalSystem.css'
 import type { ResourceData, } from '../types/resource';
 import type { PlanningData } from '../types/planning';
 import { lire } from "../types/api";
+import { AlertPlanning } from "../components/AlertPlanning";
 
 function CrewAndSurvivalSystem() {
-    // 1. Tous les states regroupés au début du composant
     const [resources, setResources] = useState<ResourceData[]>([]);
     const [planning, setPlanning] = useState<PlanningData[]>([]);
+    const [completedTaskIds, setCompletedTaskIds] = useState<number[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
-    // 2. Un seul useEffect pour charger toutes les données
+    // Pour charger toutes les données
     useEffect(() => {
         const fetchData = async () => {
         try {
@@ -38,7 +39,14 @@ function CrewAndSurvivalSystem() {
         fetchData();
     }, []);
 
-    // 3. Les affichages conditionnels uniquement à la fin
+    // Fonction pour cocher et décocher
+    const handleToggleTask = (id: number) => {
+        setCompletedTaskIds((prev) =>
+            prev.includes(id) ? prev.filter((taskId) => taskId !== id) : [...prev, id]
+        );
+    };
+
+    // Affichages conditionnels 
     if (loading) return <div className="loading">Chargement des données de survie...</div>;
     if (error) return <div className="error-message">Erreur : {error}</div>;
 
@@ -58,9 +66,19 @@ function CrewAndSurvivalSystem() {
 
                 <section className="section">
                     <p>Routines Vitales</p>
+                    <AlertPlanning 
+                        itemPlanning={planning}
+                        completedTaskIds={completedTaskIds}
+                        onValidateTask={handleToggleTask}
+                    />
                     <article className="planning-cards">
-                        {planning.slice(1).map((item) => (
-                            <ScheduleItem key={item.id} item={item} />
+                        {planning.slice(1).map((itemPlanning) => (
+                            <ScheduleItem
+                                key={itemPlanning.id}
+                                itemPlanning={itemPlanning}
+                                isDone={completedTaskIds.includes(itemPlanning.id)}
+                                onToggle={() => handleToggleTask(itemPlanning.id)}
+                            />
                         ))
                         }
                     </article>
