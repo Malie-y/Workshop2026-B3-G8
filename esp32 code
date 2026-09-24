@@ -1,0 +1,516 @@
+// ========================================
+// ASTROCOMPANION
+// Rappels + DHT22 (AM2302) + Buzzer + LED RGB
+// ESP32 connecte a l'API Laravel (workshop_db)
+//
+// Multitache (FreeRTOS, 2 coeurs) :
+//   - coeur 0 : tacheApi() -> Wi-Fi + envoi des mesures vers l'API
+//   - coeur 1 : loop()     -> DHT22, LED, buzzer, rappels (jamais bloque)
+// ========================================
+
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
+#include "DHT.h"
+
+// ========================================
+// CONFIGURATION (tout se regle ici)
+// ========================================
+
+// ---------- Reseau ----------
+const char* WIFI_SSID     = "POCO F5";
+const char* WIFI_PASSWORD = "123456789";
+
+// IP du PC qui fait tourner Docker, SUR LE WI-FI "POCO F5".
+// Sur le PC : ipconfig -> "Adresse IPv4" de la carte Wi-Fi.
+const char* API_BASE = "http://10.183.142.103:8000/api";
+
+// Delai d'attente (Laravel dans Docker peut etre lent)
+const int TIMEOUT_API = 30000;   // 30 s
+
+// Routes de ApiController (generiques pour toutes les tables) :
+//   GET    /{table}?colonne=valeur  -> liste filtree            (200)
+//   GET    /{table}/{id}            -> une ligne                (200, 404)
+//   POST   /{table}                 -> creation, renvoie ligne  (201)
+//   PUT    /{table}/{id}            -> modification, renvoie ligne (200)
+//   DELETE /{table}/{id}            -> suppression, sans corps  (204)
+
+// ---------- Table du materiel (matos_iot) ----------
+const char* TABLE_MATOS      = "/matos_iot";
+const char* COL_MATOS_ID     = "id";
+const char* COL_MATOS_NOM    = "nom";
+const char* COL_MATOS_TYPE   = "type";
+const char* COL_MATOS_VALEUR = "valeur_actuelle";
+
+// ---------- Table des mesures (logs_capteurs) ----------
+const char* TABLE_LOGS       = "/logs_capteurs";
+const char* COL_LOG_MATOS    = "matos_id";
+const char* COL_LOG_VALEUR   = "valeur_mesuree";
+
+// ---------- Table des routines (routines_quotidiennes) ----------
+const char* TABLE_ROUTINES     = "/routines_quotidiennes";
+const char* FILTRE_ROUTINES    = "?actif=1";
+const char* COL_ROUTINE_HEURE  = "heure_precise";
+const char* COL_ROUTINE_MSG    = "description";
+
+// ---------- Capteurs ----------
+// Chaque capteur est cherche par son nom dans matos_iot,
+// et cree automatiquement s'il n'existe pas.
+struct Capteur {
+  const char* nom;
+  const char* unite;   // ajoutee a la valeur : "22.5C", "45.0%"
+  int id;              // rempli automatiquement (-1 = pas encore trouve)
+};
+
+Capteur capteurTemp = {"Capteur Temperature Serre", "C", -1};
+Capteur capteurHum  = {"Capteur Humidite Air",      "%", -1};
+
+// ---------- Broches ----------
+#define LED_R 18
+#define LED_G 19
+#define LED_B 21
+#define BIPE  23
+#define CAPTEUR_TEMP 4
+#define DHTTYPE DHT22
+
+// ---------- Durees ----------
+const unsigned long DUREE_RAPPEL            = 5000;
+const unsigned long INTERVALLE_CLIGNOTEMENT = 500;
+const unsigned long INTERVALLE_TEMP         = 2000;   // lecture locale
+const unsigned long INTERVALLE_ENVOI        = 30000;  // envoi vers l'API
+
+// ========================================
+// Variables globales
+// ========================================
+
+DHT dht(CAPTEUR_TEMP, DHTTYPE);
+
+enum Etat { AUCUN, EAU, MANGER, DORMIR };
+
+struct Rappel {
+  String heure;
+  String message;
+  Etat   etat;
+};
+
+const int MAX_RAPPELS = 20;
+Rappel planning[MAX_RAPPELS];
+int nombreRappels = 0;
+
+int rappelActuel = 0;
+unsigned long debutRappel          = 0;
+unsigned long dernierClignotement  = 0;
+unsigned long derniereLectureTemp  = 0;
+
+// Mesures partagees entre les deux taches (protegees par un verrou)
+float derniereTemp = NAN;
+float derniereHum  = NAN;
+portMUX_TYPE verrouMesures = portMUX_INITIALIZER_UNLOCKED;
+
+bool ledAllumee         = false;
+bool simulationTerminee = false;
+
+// ========================================
+// Sorties (LED + Buzzer)
+// eau = bleu, nourriture = vert, sommeil = rouge
+// ========================================
+
+void eteindreSorties() {
+  digitalWrite(LED_R, LOW);
+  digitalWrite(LED_G, LOW);
+  digitalWrite(LED_B, LOW);
+  digitalWrite(BIPE, LOW);
+}
+
+void activerSorties(Etat etat) {
+  eteindreSorties();
+
+  switch (etat) {
+    case EAU:    digitalWrite(LED_B, HIGH); digitalWrite(BIPE, HIGH); break;
+    case MANGER: digitalWrite(LED_G, HIGH); digitalWrite(BIPE, HIGH); break;
+    case DORMIR: digitalWrite(LED_R, HIGH); digitalWrite(BIPE, HIGH); break;
+    default: break;
+  }
+}
+
+// ========================================
+// Wi-Fi
+// ========================================
+
+void connecterWifi() {
+  Serial.print("Connexion au Wi-Fi");
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
+  unsigned long debut = millis();
+  while (WiFi.status() != WL_CONNECTED && millis() - debut < 20000) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println();
+
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.print("Connecte. IP de l'ESP32 : ");
+    Serial.println(WiFi.localIP());
+    Serial.print("API visee : ");
+    Serial.println(API_BASE);
+  } else {
+    Serial.println("Echec Wi-Fi : fonctionnement hors ligne.");
+  }
+}
+
+void verifierWifi() {
+  if (WiFi.status() == WL_CONNECTED) return;
+  Serial.println("Wi-Fi perdu, reconnexion...");
+  WiFi.reconnect();
+}
+
+// ========================================
+// API : une seule fonction pour toutes les requetes
+// ========================================
+
+// methode : "GET", "POST", "PUT", "DELETE"
+// chemin  : ex. String(TABLE_MATOS) + "/1"
+// json    : donnees a envoyer (POST/PUT). Apres l'appel, il contient la reponse.
+// Retourne true si le serveur a repondu avec un code 2xx.
+bool apiRequest(const char* methode, const String& chemin, JsonDocument& json) {
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("[API] Pas de Wi-Fi");
+    return false;
+  }
+
+  HTTPClient http;
+  String url = String(API_BASE) + chemin;
+  http.begin(url);
+  http.setConnectTimeout(TIMEOUT_API);
+  http.setTimeout(TIMEOUT_API);
+  http.addHeader("Accept", "application/json");
+
+  // Corps envoye uniquement pour POST / PUT
+  String corps;
+  bool avecCorps = strcmp(methode, "GET") != 0 && strcmp(methode, "DELETE") != 0;
+  if (avecCorps && !json.isNull()) {
+    serializeJson(json, corps);
+    http.addHeader("Content-Type", "application/json");
+  }
+
+  int code = http.sendRequest(methode, corps);
+  String reponse = (code > 0) ? http.getString() : "";
+  http.end();
+
+  if (code < 200 || code >= 300) {
+    Serial.printf("[API] %s %s -> code %d : ", methode, url.c_str(), code);
+    if (code < 0) {
+      // Erreur reseau (ex : "connection refused", "read Timeout")
+      Serial.println(HTTPClient::errorToString(code));
+    } else {
+      // Erreur Laravel : le controleur renvoie {"message": "..."}
+      JsonDocument erreur;
+      if (!deserializeJson(erreur, reponse) && erreur["message"].is<const char*>()) {
+        Serial.println(erreur["message"].as<const char*>());
+      } else {
+        Serial.println(reponse);
+      }
+    }
+    return false;
+  }
+
+  // On remplace les donnees envoyees par la reponse du serveur
+  // (vide pour un DELETE : code 204 sans corps)
+  json.clear();
+  if (reponse.length() > 0) {
+    DeserializationError err = deserializeJson(json, reponse);
+    if (err) {
+      Serial.printf("[API] JSON illisible : %s\n", err.c_str());
+      return false;
+    }
+  }
+  return true;
+}
+
+// Version sans donnees (DELETE, ou GET dont on ignore la reponse)
+bool apiRequest(const char* methode, const String& chemin) {
+  JsonDocument vide;
+  return apiRequest(methode, chemin, vide);
+}
+
+// Remplace les espaces pour pouvoir mettre un texte dans une URL
+String encoderUrl(const String& texte) {
+  String resultat = texte;
+  resultat.replace(" ", "%20");
+  return resultat;
+}
+
+// ========================================
+// Table matos_iot
+// ========================================
+
+// Cherche un capteur par son nom, le cree s'il n'existe pas.
+// Retourne son id, ou -1 si l'API est injoignable.
+int trouverOuCreerCapteur(const char* nom) {
+  JsonDocument doc;
+  String chemin = String(TABLE_MATOS) + "?" + COL_MATOS_NOM + "=" + encoderUrl(nom);
+  if (!apiRequest("GET", chemin, doc)) return -1;
+
+  if (doc.is<JsonArray>() && doc.size() > 0) {
+    return doc[0][COL_MATOS_ID].as<int>();
+  }
+
+  doc.clear();
+  doc[COL_MATOS_NOM]    = nom;
+  doc[COL_MATOS_TYPE]   = "capteur";
+  doc[COL_MATOS_VALEUR] = "--";
+  if (!apiRequest("POST", TABLE_MATOS, doc)) return -1;
+
+  Serial.printf("[API] Capteur \"%s\" cree dans matos_iot\n", nom);
+  return doc[COL_MATOS_ID].as<int>();
+}
+
+// Met a jour la valeur actuelle d'un materiel
+bool majValeurMatos(int matosId, const String& valeur) {
+  JsonDocument doc;
+  doc[COL_MATOS_VALEUR] = valeur;
+  return apiRequest("PUT", String(TABLE_MATOS) + "/" + matosId, doc);
+}
+
+// ========================================
+// Table logs_capteurs
+// ========================================
+
+// Enregistre une mesure dans logs_capteurs puis met a jour matos_iot
+bool envoyerMesure(Capteur& capteur, float valeur) {
+  // Si l'API etait injoignable au demarrage, on retrouve le capteur maintenant
+  if (capteur.id < 0) capteur.id = trouverOuCreerCapteur(capteur.nom);
+  if (capteur.id < 0) return false;
+
+  String texte = String(valeur, 1) + capteur.unite;
+
+  JsonDocument doc;
+  doc[COL_LOG_MATOS]  = capteur.id;
+  doc[COL_LOG_VALEUR] = texte;
+  if (!apiRequest("POST", TABLE_LOGS, doc)) return false;
+
+  Serial.printf("[API] %s : %s\n", capteur.nom, texte.c_str());
+  majValeurMatos(capteur.id, texte);
+  return true;
+}
+
+void envoyerMesures() {
+  // Copie des valeurs sous verrou (loop() peut les modifier en meme temps)
+  float temp, hum;
+  portENTER_CRITICAL(&verrouMesures);
+  temp = derniereTemp;
+  hum  = derniereHum;
+  portEXIT_CRITICAL(&verrouMesures);
+
+  if (isnan(temp) || isnan(hum)) return;
+
+  // Si la premiere echoue, le PC est sans doute injoignable : on n'insiste pas
+  if (!envoyerMesure(capteurTemp, temp)) return;
+  envoyerMesure(capteurHum, hum);
+}
+
+// ========================================
+// Table routines_quotidiennes -> planning
+// ========================================
+
+Etat etatDepuisTexte(const String& texte) {
+  String t = texte;
+  t.toUpperCase();
+
+  if (t.indexOf("EAU") >= 0 || t.indexOf("BOIRE") >= 0 || t.indexOf("HYDRAT") >= 0) return EAU;
+  if (t.indexOf("MANGER") >= 0 || t.indexOf("REPAS") >= 0 || t.indexOf("NOURRITURE") >= 0) return MANGER;
+  if (t.indexOf("DORMIR") >= 0 || t.indexOf("SOMMEIL") >= 0 || t.indexOf("REVEIL") >= 0) return DORMIR;
+  return AUCUN;
+}
+
+// "07:30:00" -> "07h30"
+String formaterHeure(const String& heure) {
+  if (heure.length() >= 5 && heure.charAt(2) == ':') {
+    return heure.substring(0, 2) + "h" + heure.substring(3, 5);
+  }
+  return heure;
+}
+
+void chargerPlanningParDefaut() {
+  const char* heures[]   = {"07h00", "07h30", "10h30", "12h30", "16h00", "18h00", "20h30", "22h30", "23h00"};
+  const char* messages[] = {"Reveil", "Manger", "Boire de l'eau", "Manger", "Manger",
+                            "Boire de l'eau", "Manger", "Boire de l'eau", "Dormir"};
+  const Etat  etats[]    = {DORMIR, MANGER, EAU, MANGER, MANGER, EAU, MANGER, EAU, DORMIR};
+
+  nombreRappels = 9;
+  for (int i = 0; i < nombreRappels; i++) {
+    planning[i].heure   = heures[i];
+    planning[i].message = messages[i];
+    planning[i].etat    = etats[i];
+  }
+  Serial.println("Planning par defaut charge.");
+}
+
+void chargerPlanning() {
+  JsonDocument doc;
+  String chemin = String(TABLE_ROUTINES) + FILTRE_ROUTINES;
+
+  if (!apiRequest("GET", chemin, doc) || !doc.is<JsonArray>() || doc.size() == 0) {
+    Serial.println("Planning indisponible via l'API.");
+    chargerPlanningParDefaut();
+    return;
+  }
+
+  nombreRappels = 0;
+  for (JsonObjectConst ligne : doc.as<JsonArrayConst>()) {
+    if (nombreRappels >= MAX_RAPPELS) break;
+
+    String heure   = ligne[COL_ROUTINE_HEURE] | "";
+    String message = ligne[COL_ROUTINE_MSG]   | "";
+
+    // Routine sans heure (ex : verification capteur) : pas un rappel
+    if (heure.length() == 0 || message.length() == 0) continue;
+
+    planning[nombreRappels].heure   = formaterHeure(heure);
+    planning[nombreRappels].message = message;
+    planning[nombreRappels].etat    = etatDepuisTexte(message);
+    nombreRappels++;
+  }
+
+  if (nombreRappels == 0) {
+    chargerPlanningParDefaut();
+  } else {
+    Serial.printf("Planning charge depuis l'API : %d rappel(s).\n", nombreRappels);
+  }
+}
+
+// ========================================
+// Rappels
+// ========================================
+
+void lancerRappel() {
+  Serial.println("======================");
+  Serial.print("Heure simulee : ");
+  Serial.println(planning[rappelActuel].heure);
+  Serial.print("Notification : ");
+  Serial.println(planning[rappelActuel].message);
+  Serial.println("======================");
+
+  debutRappel         = millis();
+  dernierClignotement = millis();
+  ledAllumee          = false;
+}
+
+// ========================================
+// Capteur DHT22
+// ========================================
+
+void lireTemperature() {
+  float temp = dht.readTemperature();
+  float hum  = dht.readHumidity();
+
+  if (isnan(temp) || isnan(hum)) {
+    Serial.println("--> [DHT22] Erreur de lecture ! Verifier le cablage.");
+    return;
+  }
+
+  portENTER_CRITICAL(&verrouMesures);
+  derniereTemp = temp;
+  derniereHum  = hum;
+  portEXIT_CRITICAL(&verrouMesures);
+
+  Serial.printf("--> [DHT22] Temp : %.1f C | Humidite : %.1f %%\n", temp, hum);
+}
+
+// ========================================
+// Tache API (coeur 0) : tout ce qui passe par le reseau
+// ========================================
+
+void tacheApi(void* parametre) {
+  // Recherche des capteurs dans matos_iot (peut etre lent)
+  capteurTemp.id = trouverOuCreerCapteur(capteurTemp.nom);
+  capteurHum.id  = trouverOuCreerCapteur(capteurHum.nom);
+
+  // Attend la premiere lecture valide du DHT22
+  while (isnan(derniereTemp)) {
+    vTaskDelay(pdMS_TO_TICKS(500));
+  }
+
+  for (;;) {
+    verifierWifi();
+    envoyerMesures();                              // peut durer plusieurs secondes
+    vTaskDelay(pdMS_TO_TICKS(INTERVALLE_ENVOI));   // pause sans bloquer loop()
+  }
+}
+
+// ========================================
+// Initialisation
+// ========================================
+
+void setup() {
+  Serial.begin(115200);
+  delay(200);
+
+  pinMode(LED_R, OUTPUT);
+  pinMode(LED_G, OUTPUT);
+  pinMode(LED_B, OUTPUT);
+  pinMode(BIPE, OUTPUT);
+  eteindreSorties();
+
+  dht.begin();
+  connecterWifi();
+  chargerPlanning();   // necessaire avant de lancer les rappels
+
+  // Lancement de la tache API sur le coeur 0 (loop() tourne sur le coeur 1)
+  xTaskCreatePinnedToCore(
+    tacheApi,     // fonction de la tache
+    "tache_api",  // nom (debogage)
+    8192,         // taille de pile (HTTP + JSON)
+    NULL,         // parametre
+    1,            // priorite
+    NULL,         // handle (inutile ici)
+    0             // coeur 0
+  );
+
+  Serial.println("AstroCompanion Ready !");
+  lancerRappel();
+}
+
+// ========================================
+// Boucle principale
+// ========================================
+
+void loop() {
+  unsigned long maintenant = millis();
+
+  // 1. Lecture du capteur (l'envoi est fait par tacheApi)
+  if (maintenant - derniereLectureTemp >= INTERVALLE_TEMP) {
+    derniereLectureTemp = maintenant;
+    lireTemperature();
+  }
+
+  // 2. Fin de simulation (tacheApi continue d'envoyer les mesures)
+  if (simulationTerminee) {
+    eteindreSorties();
+    return;
+  }
+
+  // 3. Clignotement LED + Buzzer
+  if (maintenant - dernierClignotement >= INTERVALLE_CLIGNOTEMENT) {
+    dernierClignotement = maintenant;
+    ledAllumee = !ledAllumee;
+
+    if (ledAllumee) activerSorties(planning[rappelActuel].etat);
+    else            eteindreSorties();
+  }
+
+  // 4. Rappel suivant
+  if (millis() - debutRappel >= DUREE_RAPPEL) {
+    eteindreSorties();
+    rappelActuel++;
+
+    if (rappelActuel >= nombreRappels) {
+      Serial.println("Simulation terminee !");
+      simulationTerminee = true;
+      return;
+    }
+
+    lancerRappel();
+  }
+}
